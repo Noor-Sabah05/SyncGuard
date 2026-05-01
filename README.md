@@ -16,7 +16,7 @@ Fast-moving teams make fast decisions. SyncGuard turns those decisions into a li
 ## Tech stack
 - Next.js App Router
 - React + TypeScript
-- SQLite (better-sqlite3)
+- SQLite (Turso / libSQL)
 - Gemini API for reasoning and transcription
 
 ## How it works
@@ -24,7 +24,7 @@ Fast-moving teams make fast decisions. SyncGuard turns those decisions into a li
 2. SyncGuard summarizes it and checks for conflicts against prior decisions.
 3. Conflicts appear in the inbox with AI explanations and suggested resolutions.
 4. The daily briefing surfaces today's priority actions.
-5. All decisions and conflicts are stored locally in SQLite.
+5. All decisions and conflicts are stored in Turso (libSQL).
 
 ## Getting started
 1. Install dependencies:
@@ -34,6 +34,8 @@ Fast-moving teams make fast decisions. SyncGuard turns those decisions into a li
 2. Create a `.env` file:
 	```bash
 	GEMINI_API_KEY="your_api_key_here"
+	LIBSQL_URL="your_turso_url"
+	LIBSQL_AUTH_TOKEN="your_turso_token"
 	```
 3. Run the dev server:
 	```bash
@@ -54,13 +56,19 @@ Fast-moving teams make fast decisions. SyncGuard turns those decisions into a li
 - `POST /api/conflicts` - resolve or override a conflict
 - `GET /api/history` - full decision history
 - `POST /api/transcribe` - voice note transcription
+- `POST /api/auth/register` - create account
+- `POST /api/auth/login` - sign in
+- `GET /api/auth/me` - current session
+- `POST /api/auth/logout` - sign out
 
-## Data model (SQLite)
+## Data model (libSQL)
 - `decisions`: founder, category, content, summary, created_at
 - `conflicts`: decision_a_id, decision_b_id, severity, explanation, status
+- `users`: name, role, email, password_hash, created_at
+- `sessions`: id, user_id, expires_at, created_at
 
 ## Notes
-- The SQLite database (`syncguard.db`) is created automatically on first run.
+- Tables are created automatically on first run via the API.
 - Voice transcription uses the Gemini API.
 
 ## Roadmap ideas

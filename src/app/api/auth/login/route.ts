@@ -15,10 +15,18 @@ export async function POST(request: NextRequest) {
       sql: 'SELECT id, name, role, email, password_hash FROM users WHERE email = ?',
       args: [email.toLowerCase().trim()],
     });
-    const user = userResult.rows[0] as
-      | { id: number; name: string; role: string; email: string; password_hash: string }
-      | undefined;
+    const row = userResult.rows[0];
 
+    if (!row) return null;
+
+    const user = {
+      id: Number(row.id),
+      name: String(row.name),
+      role: String(row.role),
+      email: String(row.email),
+      password_hash: String(row.password_hash),
+    };
+    
     if (!user || !verifyPassword(password, user.password_hash)) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
