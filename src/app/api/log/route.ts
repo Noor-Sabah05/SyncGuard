@@ -17,7 +17,13 @@ export async function POST(request: NextRequest) {
     const priorDecisionsResult = await db.execute(
       `SELECT id, founder_id, category, summary, created_at FROM decisions ORDER BY created_at DESC LIMIT 50`
     );
-    const priorDecisions = priorDecisionsResult.rows as { id: number; founder_id: string; category: string; summary: string; created_at: string }[];
+    const priorDecisions = priorDecisionsResult.rows.map((row) => ({
+      id: Number(row.id),
+      founder_id: String(row.founder_id),
+      category: String(row.category),
+      summary: String(row.summary),
+      created_at: String(row.created_at),
+    }));
 
     // Run AI conflict detection
     let result: ConflictResult;
