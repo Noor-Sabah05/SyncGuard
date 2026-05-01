@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import getDb from '@/lib/db';
+import { db, initDb } from '@/lib/db';
 import { verifyPassword, createSession, SESSION_COOKIE } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -10,9 +10,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = getDb()
-      .prepare('SELECT id, name, role, email, password_hash FROM users WHERE email = ?')
-      .get(email.toLowerCase().trim()) as
+    await initDb();
+    const userResult = await db.execute({
+      sql: 'SELECT id, name, role, email, password_hash FROM users WHERE email = ?',
+      args: [email.toLowerCase().trim()],
+    });
+    const user = userResult.rows[0] as
       | { id: number; name: string; role: string; email: string; password_hash: string }
       | undefined;
 
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const sessionId = createSession(user.id);
+    const sessionId = await createSession(user.id);
 
     const res = NextResponse.json({
       success: true,

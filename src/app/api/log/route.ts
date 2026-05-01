@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import getDb from '@/lib/db';
+import { db, initDb } from '@/lib/db';
 import { detect_conflict, ConflictResult } from '@/lib/gemini';
 
 export async function POST(request: NextRequest) {
@@ -11,12 +11,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const db = getDb();
+    await initDb();
 
     // Get prior decisions for conflict check
-    const priorDecisions = db.prepare(
+    const priorDecisionsResult = await db.execute(
       `SELECT id, founder_id, category, summary, created_at FROM decisions ORDER BY created_at DESC LIMIT 50`
-    ).all() as { id: number; founder_id: string; category: string; summary: string; created_at: string }[];
+    );
+    const priorDecisions = priorDecisionsResult.rows as { id: number; founder_id: string; category: string; summary: string; created_at: string }[];
 
     // Run AI conflict detection
     let result: ConflictResult;
@@ -28,31 +29,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Save the new decision
-    const insertDecision = db.prepare(
-      `INSERT INTO decisions (founder_id, category, content, summary) VALUES (?, ?, ?, ?)`
-    );
-    const info = insertDecision.run(founder_id, category, content, result.summary);
-    const newDecisionId = info.lastInsertRowid;
+    const info = await db.execute({
+      sql: 'INSERT INTO decisions (founder_id, category, content, summary) VALUES (?, ?, ?, ?)',
+      args: [founder_id, category, content, result.summary],
+    });
+    const newDecisionId = Number(info.lastInsertRowid);
 
     // If conflict detected, save it
     let conflictId = null;
     if (result.hasConflict && result.priorDecisionId) {
       // Verify the prior decision exists
-      const priorExists = db.prepare('SELECT id FROM decisions WHERE id = ?').get(result.priorDecisionId);
-      if (priorExists) {
-        const insertConflict = db.prepare(
-          `INSERT INTO conflicts (decision_a_id, decision_b_id, severity, conflict_type, explanation, suggested_resolution)
-           VALUES (?, ?, ?, ?, ?, ?)`
-        );
-        const conflictInfo = insertConflict.run(
-          result.priorDecisionId,
-          newDecisionId,
-          result.severity || 'blue',
-          result.conflictType || 'Unknown',
-          result.explanation || 'Potential conflict detected.',
-          result.suggestedResolution || 'Review both decisions and align.'
-        );
-        conflictId = conflictInfo.lastInsertRowid;
+      const priorExistsResult = await db.execute({
+        sql: 'SELECT id FROM decisions WHERE id = ?',
+        args: [result.priorDecisionId],
+      });
+      if (priorExistsResult.rows.length > 0) {
+        const conflictInfo = await db.execute({
+          sql: `INSERT INTO conflicts (decision_a_id, decision_b_id, severity, conflict_type, explanation, suggested_resolution)
+                VALUES (?, ?, ?, ?, ?, ?)`,
+          args: [
+            result.priorDecisionId,
+            newDecisionId,
+            result.severity || 'blue',
+            result.conflictType || 'Unknown',
+            result.explanation || 'Potential conflict detected.',
+            result.suggestedResolution || 'Review both decisions and align.',
+          ],
+        });
+        conflictId = Number(conflictInfo.lastInsertRowid);
       }
     }
 

@@ -1,26 +1,28 @@
 import { NextResponse } from 'next/server';
-import getDb from '@/lib/db';
+import { db, initDb } from '@/lib/db';
 
 export async function GET() {
   try {
-    const db = getDb();
+    await initDb();
     
     // Fetch all decisions, newest first
-    const decisions = db.prepare(`
+    const decisionsResult = await db.execute(`
       SELECT id, founder_id, category, summary, content, created_at
       FROM decisions
       ORDER BY created_at DESC
-    `).all() as any[];
+    `);
+    const decisions = decisionsResult.rows as any[];
 
     // Fetch all conflicts where the newer decision (decision_b) caused it
     // Include details of the older decision (decision_a) to give context
-    const conflicts = db.prepare(`
+    const conflictsResult = await db.execute(`
       SELECT 
         c.id, c.decision_b_id, c.severity, c.conflict_type, c.status,
         da.founder_id as prior_founder, da.summary as prior_summary
       FROM conflicts c
       JOIN decisions da ON c.decision_a_id = da.id
-    `).all() as any[];
+    `);
+    const conflicts = conflictsResult.rows as any[];
 
     // Map conflicts into their respective triggering decisions
     const history = decisions.map((d) => {
@@ -47,12 +49,9 @@ export async function GET() {
 
 export async function DELETE() {
   try {
-    const db = getDb();
-    const tx = db.transaction(() => {
-      db.prepare('DELETE FROM conflicts').run();
-      db.prepare('DELETE FROM decisions').run();
-    });
-    tx();
+    await initDb();
+    await db.execute('DELETE FROM conflicts');
+    await db.execute('DELETE FROM decisions');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('History DELETE error:', error);

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import getDb from '@/lib/db';
+import { db, initDb } from '@/lib/db';
 
 export async function GET() {
   try {
-    const db = getDb();
-    const conflicts = db.prepare(`
+    await initDb();
+    const conflictsResult = await db.execute(`
       SELECT
         c.id, c.severity, c.conflict_type, c.explanation, c.suggested_resolution, c.status, c.created_at,
         da.id as da_id, da.founder_id as da_founder, da.summary as da_summary, da.created_at as da_date,
@@ -16,7 +16,8 @@ export async function GET() {
       ORDER BY
         CASE c.severity WHEN 'red' THEN 1 WHEN 'amber' THEN 2 WHEN 'blue' THEN 3 END,
         c.created_at DESC
-    `).all();
+      `);
+      const conflicts = conflictsResult.rows;
 
     return NextResponse.json({ conflicts });
   } catch (error) {
@@ -32,24 +33,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing id or action' }, { status: 400 });
     }
 
-    const db = getDb();
+    await initDb();
 
     // Log the resolution as a new decision if provided
     if (resolutionText && founder_id) {
-      const conflictData = db.prepare('SELECT conflict_type FROM conflicts WHERE id = ?').get(id) as any;
+      const conflictDataResult = await db.execute({
+        sql: 'SELECT conflict_type FROM conflicts WHERE id = ?',
+        args: [id],
+      });
+      const row = conflictDataResult.rows[0];
+
+      const conflictData = row
+        ? { conflict_type: String(row.conflict_type) }
+        : undefined;
+      
       const cType = conflictData ? conflictData.conflict_type : 'Conflict';
       const summary = `Resolved: ${cType}`;
       const content = `Conflict Resolution (${action}):\n${resolutionText}`;
       
-      db.prepare(
-        `INSERT INTO decisions (founder_id, category, content, summary) VALUES (?, ?, ?, ?)`
-      ).run(founder_id, 'Other', content, summary);
+      await db.execute({
+        sql: 'INSERT INTO decisions (founder_id, category, content, summary) VALUES (?, ?, ?, ?)',
+        args: [founder_id, 'Other', content, summary],
+      });
     }
 
     if (action === 'resolve') {
-      db.prepare('UPDATE conflicts SET status = ? WHERE id = ?').run('resolved', id);
+      await db.execute({ sql: 'UPDATE conflicts SET status = ? WHERE id = ?', args: ['resolved', id] });
     } else if (action === 'override') {
-      db.prepare('UPDATE conflicts SET status = ? WHERE id = ?').run('overridden', id);
+      await db.execute({ sql: 'UPDATE conflicts SET status = ? WHERE id = ?', args: ['overridden', id] });
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }

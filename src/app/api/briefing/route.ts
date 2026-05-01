@@ -1,25 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import getDb from '@/lib/db';
+import { db, initDb } from '@/lib/db';
 import { generate_daily_briefing } from '@/lib/gemini';
 
 export async function GET(request: NextRequest) {
   try {
-    const founder = request.nextUrl.searchParams.get('founder') || 'Alice (CEO)';
-    const db = getDb();
+    const founder = request.nextUrl.searchParams.get('founder') || 'Unknown Founder';
+    await initDb();
 
-    const recentDecisions = db.prepare(
+    const recentDecisionsResult = await db.execute(
       `SELECT category, summary, created_at FROM decisions
        WHERE created_at >= datetime('now', '-7 days')
        ORDER BY created_at DESC LIMIT 20`
-    ).all() as { category: string; summary: string; created_at: string }[];
+    );
+    const recentDecisions = recentDecisionsResult.rows as { category: string; summary: string; created_at: string }[];
 
-    const openConflicts = db.prepare(
+    const openConflictsResult = await db.execute(
       `SELECT conflict_type as conflictType, explanation, severity FROM conflicts WHERE status = 'open'`
-    ).all() as { conflictType: string; explanation: string; severity: string }[];
+    );
+    const openConflicts = openConflictsResult.rows as { conflictType: string; explanation: string; severity: string }[];
 
-    const conflictCount = db.prepare(
+    const conflictCountResult = await db.execute(
       `SELECT COUNT(*) as count FROM conflicts WHERE status = 'open'`
-    ).get() as { count: number };
+    );
+    const conflictCount = conflictCountResult.rows[0] as { count: number } | undefined;
 
     let tasks;
     try {
@@ -32,7 +35,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    return NextResponse.json({ tasks, conflictCount: conflictCount.count });
+    return NextResponse.json({ tasks, conflictCount: conflictCount?.count ?? 0 });
   } catch (error) {
     console.error('Briefing error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
