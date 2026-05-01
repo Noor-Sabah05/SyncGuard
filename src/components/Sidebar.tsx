@@ -45,14 +45,31 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     setLogoutLoading(true);
+
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      // Clear server session (must include cookies)
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      // Optional: verify session is gone (prevents stale UI state)
+      await fetch('/api/auth/me', {
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
     } finally {
+      // Clear client-side state no matter what
       localStorage.removeItem('syncguard_founder');
-      router.push('/auth');
+
+      // Force clean navigation
+      router.replace('/auth');
+
+      // Reset loading state
+      setLogoutLoading(false);
     }
   };
-
   return (
     <nav className="sidebar">
       <div className="sidebar-logo">

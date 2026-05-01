@@ -23,7 +23,9 @@ function AuthForm() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetch('/api/auth/me').then((r) => {
+        fetch('/api/auth/me', {
+            credentials: 'include',
+        }).then((r) => {
             if (r.ok) router.replace('/dashboard');
         });
     }, [router]);
@@ -38,6 +40,7 @@ function AuthForm() {
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ email: loginEmail, password: loginPassword }),
             });
             const data = await res.json();
@@ -64,6 +67,7 @@ function AuthForm() {
             const res = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ name: regName, role: regRole, email: regEmail, password: regPassword }),
             });
             const data = await res.json();
