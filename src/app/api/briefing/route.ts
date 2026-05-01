@@ -12,18 +12,30 @@ export async function GET(request: NextRequest) {
        WHERE created_at >= datetime('now', '-7 days')
        ORDER BY created_at DESC LIMIT 20`
     );
-    const recentDecisions = recentDecisionsResult.rows as { category: string; summary: string; created_at: string }[];
+    const recentDecisions = recentDecisionsResult.rows.map((row) => ({
+      category: String(row.category),
+      summary: String(row.summary),
+      created_at: String(row.created_at),
+    }));
 
     const openConflictsResult = await db.execute(
       `SELECT conflict_type as conflictType, explanation, severity FROM conflicts WHERE status = 'open'`
     );
-    const openConflicts = openConflictsResult.rows as { conflictType: string; explanation: string; severity: string }[];
+    const openConflicts = openConflictsResult.rows.map((row) => ({
+      conflictType: String(row.conflictType),
+      explanation: String(row.explanation),
+      severity: String(row.severity),
+    }));
 
     const conflictCountResult = await db.execute(
       `SELECT COUNT(*) as count FROM conflicts WHERE status = 'open'`
     );
-    const conflictCount = conflictCountResult.rows[0] as { count: number } | undefined;
+    const conflictCountRow = conflictCountResult.rows[0];
 
+    const conflictCount = conflictCountRow
+      ? Number(conflictCountRow.count)
+      : 0;
+    
     let tasks;
     try {
       tasks = await generate_daily_briefing(founder, recentDecisions, openConflicts);
@@ -35,8 +47,13 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    return NextResponse.json({ tasks, conflictCount: conflictCount?.count ?? 0 });
-  } catch (error) {
+    return NextResponse.json({
+      tasks,
+      conflictCount,
+    });
+
+  }
+  catch (error) {
     console.error('Briefing error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
