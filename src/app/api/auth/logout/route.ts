@@ -9,7 +9,13 @@ export async function POST() {
     if (sessionId) await deleteSession(sessionId);
 
     const res = NextResponse.json({ success: true });
-    res.cookies.set(SESSION_COOKIE, '', { maxAge: 0, path: '/' });
+    res.cookies.set(SESSION_COOKIE, '', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 0,
+      path: '/',
+    });
     return res;
   } catch (error) {
     console.error('Logout error:', error);
