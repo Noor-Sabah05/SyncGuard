@@ -29,7 +29,7 @@ export default function LogPage() {
     setLoading(true);
     setResult(null);
 
-    const founder = localStorage.getItem('syncguard_founder') || 'Alice (CEO)';
+    const founder = localStorage.getItem('syncguard_founder') || 'Unknown Founder';
 
     try {
       const res = await fetch('/api/log', {

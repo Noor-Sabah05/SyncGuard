@@ -24,6 +24,7 @@ interface DecisionItem {
 export default function HistoryPage() {
   const [history, setHistory] = useState<DecisionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clearing, setClearing] = useState(false);
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -39,6 +40,17 @@ export default function HistoryPage() {
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
+  const handleClearHistory = async () => {
+    if (!confirm('Clear all decision history and conflicts? This cannot be undone.')) return;
+    setClearing(true);
+    try {
+      await fetch('/api/history', { method: 'DELETE' });
+      setHistory([]);
+    } finally {
+      setClearing(false);
+    }
+  };
+
   const formatDate = (d: string) => {
     try {
       return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -48,8 +60,15 @@ export default function HistoryPage() {
   return (
     <div className="fade-in">
       <div className="page-header">
-        <h1 className="page-title">Decision History</h1>
-        <p className="page-subtitle">A timeline of all logged decisions and conflicts</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <h1 className="page-title">Decision History</h1>
+            <p className="page-subtitle">A timeline of all logged decisions and conflicts</p>
+          </div>
+          <button className="btn btn-danger" onClick={handleClearHistory} disabled={clearing || loading}>
+            {clearing ? <><span className="spinner" /> Clearing…</> : 'Clear History'}
+          </button>
+        </div>
       </div>
 
       {loading ? (

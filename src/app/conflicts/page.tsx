@@ -48,7 +48,7 @@ export default function ConflictsPage() {
     if (!resolvingId || !resolvingAction || !resolutionText.trim()) return;
     setActionLoading(resolvingId);
     try {
-      const founder = localStorage.getItem('syncguard_founder') || 'Alice (CEO)';
+      const founder = localStorage.getItem('syncguard_founder') || 'Unknown Founder';
       await fetch('/api/conflicts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,7 +86,7 @@ export default function ConflictsPage() {
 
   const handleCreateTask = async (c: ConflictItem) => {
     setTaskLoading(c.id);
-    const founder = localStorage.getItem('syncguard_founder') || 'Alice (CEO)';
+    const founder = localStorage.getItem('syncguard_founder') || 'Unknown Founder';
     const taskContent = `TASK from conflict #${c.id}: ${c.conflict_type}\n\nDecision A (${c.da_founder}): ${c.da_summary}\nDecision B (${c.db_founder}): ${c.db_summary}\n\nSuggested resolution: ${c.suggested_resolution}`;
 
     try {

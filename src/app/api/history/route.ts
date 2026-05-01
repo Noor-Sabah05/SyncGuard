@@ -44,3 +44,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const db = getDb();
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM conflicts').run();
+      db.prepare('DELETE FROM decisions').run();
+    });
+    tx();
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('History DELETE error:', error);
+    return NextResponse.json({ error: 'Failed to clear history' }, { status: 500 });
+  }
+}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 * {
   box-sizing: border-box;
@@ -48,7 +48,7 @@ html, body {
   height: 100%;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -143,7 +143,7 @@ html, body {
   border-radius: 0 3px 3px 0;
 }
 
-.sidebar-founder {
+.sidebar-account {
   margin-top: auto;
   padding: 14px;
   background: var(--bg-card);
@@ -151,7 +151,7 @@ html, body {
   border-radius: var(--radius-sm);
 }
 
-.sidebar-founder label {
+.sidebar-account label {
   display: block;
   font-size: 11px;
   font-weight: 600;
@@ -161,21 +161,49 @@ html, body {
   margin-bottom: 8px;
 }
 
-.sidebar-founder select {
-  width: 100%;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-primary);
-  font-size: 13px;
-  padding: 7px 10px;
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
+.account-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+
+.account-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.account-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.account-email {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.btn-logout {
+  margin-top: 10px;
+  width: 100%;
+  justify-content: center;
+}
+
+.account-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-line {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton-line.short { width: 60%; }
 
 /* ── Main Content ── */
 .main-content {
@@ -546,6 +574,26 @@ html, body {
 
 .form-textarea::placeholder { color: var(--text-muted); }
 
+.form-input {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-input:focus {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.form-input::placeholder { color: var(--text-muted); }
+
 .form-select {
   width: 100%;
   background: var(--bg-secondary);
@@ -734,6 +782,11 @@ html, body {
   to   { opacity: 1; }
 }
 
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .fade-in { animation: fade-in 0.4s ease; }
 
 /* ── Glow Divider ── */
@@ -741,6 +794,86 @@ html, body {
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
   margin: 32px 0;
+}
+
+/* ── Auth UI ── */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  overflow-y: auto;
+  background:
+    radial-gradient(600px 400px at 80% 10%, rgba(99,102,241,0.25), transparent 60%),
+    radial-gradient(600px 400px at 20% 90%, rgba(16,185,129,0.18), transparent 60%),
+    var(--bg-primary);
+  z-index: 200;
+}
+
+.auth-card {
+  width: min(560px, 100%);
+  background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(13,19,32,0.95));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 28px 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  padding: 4px;
+}
+
+.auth-tab {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.auth-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--border-glow);
+}
+
+.auth-error {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  color: var(--red);
+  font-size: 13px;
+}
+
+.auth-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
 }
 
 /* Scrollbar */

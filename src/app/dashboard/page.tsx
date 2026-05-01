@@ -36,7 +36,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const founder = localStorage.getItem('syncguard_founder') || 'Alice (CEO)';
+    const founder = localStorage.getItem('syncguard_founder') || 'Unknown Founder';
     fetch(`/api/briefing?founder=${encodeURIComponent(founder)}`)
       .then((r) => r.json())
       .then((data) => {
