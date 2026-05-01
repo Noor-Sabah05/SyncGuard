@@ -17,7 +17,12 @@ export async function POST(request: NextRequest) {
     });
     const row = userResult.rows[0];
 
-    if (!row) return null;
+    if (!row) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
 
     const user = {
       id: Number(row.id),
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
       email: String(row.email),
       password_hash: String(row.password_hash),
     };
-    
+
     if (!user || !verifyPassword(password, user.password_hash)) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
